@@ -89,6 +89,7 @@ def smooth_map(I, Q, U, fwhm_out=1.0, Bl=None, lmax=None, nside_out=None):
     # SETUP INPUTS 
     if isinstance(nside_out, type(None)):
         nside_out = NSIDE
+        npix_out = 12*nside_out**2
 
     if isinstance(lmax, type(None)):
         lmax = 3 * NSIDE - 1
@@ -120,7 +121,7 @@ def smooth_map(I, Q, U, fwhm_out=1.0, Bl=None, lmax=None, nside_out=None):
     dalm_E = hp.almxfl(alm_E, bl_raw_spin2[:lmax + 1])
     dalm_B = hp.almxfl(alm_B, bl_raw_spin2[:lmax + 1])
 
-    dI, dQ, dU = hp.alm2map((dalm_I, dalm_E, dalm_B), nside=NSIDE)
+    dI, dQ, dU = hp.alm2map((dalm_I, dalm_E, dalm_B), nside=nside_out)
     dI[I[0] == hp.UNSEEN] = hp.UNSEEN
     dQ[Q[1] == hp.UNSEEN] = hp.UNSEEN
     dU[U[2] == hp.UNSEEN] = hp.UNSEEN
@@ -200,6 +201,7 @@ def smooth_variance_map(II, QQ, UU, IQ=None, IU=None, QU=None, fwhm_out=1.0,  Bl
 
     if isinstance(nside_out, type(None)):
         nside_out = NSIDE
+        npix_out = 12*nside_out**2
 
     # SETUP INPUTS 
     if isinstance(lmax, type(None)):
@@ -233,21 +235,28 @@ def smooth_variance_map(II, QQ, UU, IQ=None, IU=None, QU=None, fwhm_out=1.0,  Bl
     dalm_I = hp.almxfl(alm_I, bl_raw_spin0[:lmax + 1])
     dalm_E = hp.almxfl(alm_E, bl_raw_spin0[:lmax + 1])
     dalm_B = hp.almxfl(alm_B, bl_raw_spin0[:lmax + 1])
-    dII = hp.alm2map(dalm_I, nside=NSIDE)
-    dQQ = hp.alm2map(dalm_E, nside=NSIDE)
-    dUU = hp.alm2map(dalm_B, nside=NSIDE)
+    dII = hp.alm2map(dalm_I, nside=nside_out)
+    dQQ = hp.alm2map(dalm_E, nside=nside_out)
+    dUU = hp.alm2map(dalm_B, nside=nside_out)
 
     if not isinstance(IQ, type(None)):
         null_map = np.zeros_like(II)
         alm_QU_E, alm_QU_B = hp.map2alm_spin([QU,null_map], spin=2,lmax=lmax)
         dalm_QU_E = hp.almxfl(alm_QU_E, bl_raw_spin2[:lmax + 1])
         dalm_QU_B = hp.almxfl(alm_QU_B, bl_raw_spin2[:lmax + 1])
-        dQU,_ = hp.alm2map_spin((dalm_QU_E,dalm_QU_B), spin=2,lmax=lmax, nside=NSIDE)
+        dQU,_ = hp.alm2map_spin((dalm_QU_E,dalm_QU_B), spin=2,lmax=lmax, nside=nside_out)
     else:
-        dQU = np.zeros(NPIX) 
+        dQU = np.zeros(npix_out) 
 
-    dIU = np.zeros(NPIX)
-    dIQ = np.zeros(NPIX)
+    dIU = np.zeros(npix_out)
+    dIQ = np.zeros(npix_out)
+
+    dII[II == hp.UNSEEN] = hp.UNSEEN
+    dQQ[QQ == hp.UNSEEN] = hp.UNSEEN
+    dUU[UU == hp.UNSEEN] = hp.UNSEEN
+    dIQ[IQ == hp.UNSEEN] = hp.UNSEEN
+    dIU[IU == hp.UNSEEN] = hp.UNSEEN
+    dQU[QU == hp.UNSEEN] = hp.UNSEEN
 
     dII[dII != hp.UNSEEN] *= PIXAREA * (2*np.pi)
     dQQ[dQQ != hp.UNSEEN] *= PIXAREA * (2*np.pi)

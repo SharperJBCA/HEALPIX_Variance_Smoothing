@@ -89,26 +89,9 @@ def test_smooth_variance_map():
     
     fwhm_out = np.radians(15)
     
-    #smooth_IIn, smooth_QQn, smooth_UUn, smooth_IQn, smooth_IUn, smooth_QUn = smooth_variance_map_numerical(II, QQ, UU, IQ, IU, QU, fwhm_out)
-    # smooth_IIn, smooth_QQn, smooth_UUn, smooth_IQn, smooth_IUn, smooth_QUn = hp.read_map('test_images/numerical_smooth_variances.fits',field=[0,1,2,3,4,5])
-    # pyplot.figure(figsize=(8,16))
-    # hp.mollview(smooth_IIn, title='numerical smooth_II',sub=(3,1,1))
-    # hp.mollview(smooth_QQn, title='numerical smooth_QQ',sub=(3,1,2))
-    # hp.mollview(smooth_UUn, title='numerical smooth_UU',sub=(3,1,3))
-    # hp.graticule()
-    # pyplot.savefig('test_images/numerical_smooth_variance_map.png')
-    # pyplot.close()
-    #hp.write_map('test_images/numerical_smooth_variances.fits',
-    #             [smooth_IIn, smooth_QQn, smooth_UUn, smooth_IQn, smooth_IUn, smooth_QUn],overwrite=True)
-
     smooth_II, smooth_QQ, smooth_UU, smooth_IQ, smooth_IU, smooth_QU = smooth_variance_map(
         II, QQ, UU, IQ, IU, QU, fwhm_out, nside_out=32
     )
-
-    #pyplot.plot(smooth_II, smooth_IIn, '.')
-    #pyplot.plot(smooth_QQ, smooth_QQn, '.')
-    #pyplot.plot(smooth_UU, smooth_UUn, '.')
-    #pyplot.show()
     
     assert len(smooth_II) == npix
     assert len(smooth_QQ) == npix
@@ -117,11 +100,6 @@ def test_smooth_variance_map():
     assert len(smooth_IU) == npix
     assert len(smooth_QU) == npix
     
-    # Check if smoothing reduces the standard deviation
-    #assert np.std(smooth_II) < np.std(II)
-    #assert np.std(smooth_QQ) < np.std(QQ)
-    #assert np.std(smooth_UU) < np.std(UU)
-
     hp.write_map('test_images/analytical_smooth_variances.fits',
                  [smooth_II,smooth_QQ,smooth_UU,smooth_IQ,smooth_IU,smooth_QU],overwrite=True)
     pyplot.figure(figsize=(8,16))
@@ -141,11 +119,53 @@ def test_smooth_variance_map():
     pyplot.close()
 
 
+def test_smooth_real_variance_map():
+    
+    II,QQ,UU,QU = hp.read_map('cbass_maps/cbass_DR1_ss_1024.fits',field=[3,4,5,6])
+    IU = np.zeros_like(II)
+    IQ = np.zeros_like(II)
+    npix = II.size
+    nside = hp.npix2nside(npix)
+    nside_out = 32
+    fwhm_out = np.radians(15)
+    
+    smooth_II, smooth_QQ, smooth_UU, smooth_IQ, smooth_IU, smooth_QU = smooth_variance_map(
+        II, QQ, UU, IQ, IU, QU, fwhm_out, nside_out=32
+    )
+    npix_out = hp.nside2npix(nside_out)
+    
+    assert len(smooth_II) == npix_out
+    assert len(smooth_QQ) == npix_out
+    assert len(smooth_UU) == npix_out
+    assert len(smooth_IQ) == npix_out
+    assert len(smooth_IU) == npix_out
+    assert len(smooth_QU) == npix_out
+    
+    hp.write_map('test_images/real_analytical_smooth_variances.fits',
+                 [smooth_II,smooth_QQ,smooth_UU,smooth_IQ,smooth_IU,smooth_QU],overwrite=True)
+    pyplot.figure(figsize=(8,16))
+    hp.mollview(smooth_II, title='smooth_II',sub=(3,1,1),rot=[0,90])
+    hp.mollview(smooth_QQ, title='smooth_QQ',sub=(3,1,2),rot=[0,90])
+    hp.mollview(smooth_UU, title='smooth_UU',sub=(3,1,3),rot=[0,90])
+    hp.graticule()
+    pyplot.savefig('test_images/real_smooth_variance_map.png')
+    pyplot.close()
+
+    pyplot.figure(figsize=(8,16))
+    hp.mollview(II, title='input_II',sub=(3,1,1))
+    hp.mollview(QQ, title='input_QQ',sub=(3,1,2))
+    hp.mollview(UU, title='input_UU',sub=(3,1,3))
+    hp.graticule()
+    pyplot.savefig('test_images/real_input_variance_map.png')
+    pyplot.close()
+
+
+
 if __name__ == "__main__":
     np.random.seed(0)   
     os.makedirs('test_images',exist_ok=True)
-    test_produce_dec_mask()
-    test_square_beam()
-    test_smooth_map()
-    test_smooth_variance_map()
+    #test_produce_dec_mask()
+    #test_square_beam()
+    #test_smooth_map()
+    test_smooth_real_variance_map()
     print("All tests passed!")
